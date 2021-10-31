@@ -1,59 +1,92 @@
 package com.example.codefellowship1.controllers;
 
 
-import com.example.codefellowship1.models.AppUser;
+import com.example.codefellowship1.models.Application;
 import com.example.codefellowship1.models.Post;
-import com.example.codefellowship1.repository.AppUserRepository;
+import com.example.codefellowship1.repository.ApplicationUserRepository;
 import com.example.codefellowship1.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.security.Principal;
-import java.sql.Timestamp;
-import java.util.List;
 import java.util.Set;
 
 @Controller
 public class PostController {
+
+    @Autowired
+    ApplicationUserRepository applicationUserRepository;
     @Autowired
     PostRepository postRepository;
 
-    @Autowired
-    AppUserRepository appUserRepository;
 
-    @PostMapping("/posts")
-    public RedirectView createPost(Principal p, Model m, String body){
-        AppUser user = appUserRepository.findByUsername(p.getName());
-
-        if(user != null){
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            Post post = new Post(body, timestamp, user);
-            postRepository.save(post);
+    @GetMapping("/myprofile")
+    public String UserProfile(Principal principal , Model model) {
+        if (applicationUserRepository != null) {
+            model.addAttribute("userData", principal.getName());
+            model.addAttribute("allUserData", applicationUserRepository.findByUsername(principal.getName()));
+        } else {
+            model.addAttribute("userData", "No user");
+            model.addAttribute("allUserData", new Application());
         }
+        return "user";
+    }
 
-        m.addAttribute("principal", p.getName());
-        m.addAttribute("appUser", user);
+    @PostMapping("/myprofile")
+    public RedirectView addNewPost(Principal principal , @RequestParam String body){
+        Post post = new Post(body , applicationUserRepository.findByUsername(principal.getName()));
+        postRepository.save(post);
         return new RedirectView("/myprofile");
     }
 
-    @GetMapping("/post")
-    public String getPostPage() {
-        return "postpage";
+    //////////////////////////////////////////////
+    @GetMapping("/allUsers")
+    public String getAllUsers(Principal principal,Model model){
+        try{
+            model.addAttribute("userData",principal.getName());
+            model.addAttribute("AllUsers",applicationUserRepository.findAll());
+
+            Application user = applicationUserRepository.findByUsername(principal.getName());
+            model.addAttribute("userFollow",user.getFollowers());
+        }catch (NullPointerException e){
+            model.addAttribute("userData","");
+        }
+        return "allUsers";
     }
 
-    @GetMapping("/feed")
-    public String getFeedPage(Principal p, Model m) {
-        AppUser appUser = appUserRepository.findByUsername(p.getName());
-        Set<AppUser> following = appUser.getFollowing();
-        List<Post> posts = postRepository.findByAppUserIn(following);
 
-        m.addAttribute("posts",posts);
-        m.addAttribute("appUser",appUser);
-        m.addAttribute("principal", p.getName());
+    @GetMapping
+
+
+
+    @PostMapping("/follow")
+    public RedirectView addFollow(Principal principal, @RequestParam int id){
+        Application user = applicationUserRepository.findByUsername(principal.getName());
+        Application toFollow = applicationUserRepository.findById(id).get();
+        user.getFollowers().add(toFollow);
+
+        applicationUserRepository.save(user);
+        return new RedirectView("/feed");
+    }
+
+
+    @GetMapping("/feed")
+    public String getFollowingInfo(Principal principal, Model model){
+        try{
+            model.addAttribute("userData",principal.getName());
+            Application user = applicationUserRepository.findByUsername(principal.getName());
+
+            Set<Application> userFollow = user.getFollowers();
+
+            model.addAttribute("Allfollowing",userFollow);
+        }catch (NullPointerException e){
+            model.addAttribute("userData","");
+        }
         return "feed";
     }
 
