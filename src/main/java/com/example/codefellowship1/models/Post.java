@@ -1,32 +1,36 @@
 package com.example.codefellowship1.models;
 
-
 import javax.persistence.*;
-import java.sql.Timestamp;
 
 @Entity
 public class Post {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Long id;
+    private Integer id;
+    private String body;
+    private  int createdAt;
+    @ManyToOne
+    private Application applicationUser;
 
-    public Long getId() {
+
+    public Post(String body, Application applicationUser) {
+        this.body = body;
+        this.applicationUser=applicationUser;
+    }
+
+    public Post(){
+
+    }
+
+
+
+    public Integer getId() {
         return id;
     }
 
-    String body;
-    Timestamp createdAt;
-
-    @ManyToOne
-    AppUser appUser;
-
-    public Post(){}
-
-    public Post(String body, Timestamp createdAt, AppUser appUser) {
-        this.body = body;
-        this.createdAt = createdAt;
-        this.appUser = appUser;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getBody() {
@@ -37,19 +41,11 @@ public class Post {
         this.body = body;
     }
 
-    public Timestamp getCreatedAt() {
+    public int getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(int createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public AppUser getAppUser() {
-        return appUser;
-    }
-
-    public void setAppUser(AppUser appUser) {
-        this.appUser = appUser;
     }
 }
